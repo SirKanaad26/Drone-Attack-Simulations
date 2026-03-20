@@ -64,8 +64,23 @@ def wait_heartbeat_on_port(port: int, timeout_s: float = 20.0) -> mavutil.mavfil
     raise TimeoutError(f"No heartbeat on udp:127.0.0.1:{port} within {timeout_s}s")
 
 
+PX4_MODE_AUTO_TAKEOFF = (4 << 16) | (2 << 24)   # main AUTO, sub TAKEOFF
+
+
 def arm_and_takeoff(sysid: int, cmd_port: int, takeoff_alt_m: float) -> None:
     cmd = mavutil.mavlink_connection(f"udpout:127.0.0.1:{cmd_port}")
+
+    # PX4 only accepts MAV_CMD_NAV_TAKEOFF in AUTO mode.  Switch first.
+    cmd.mav.command_long_send(
+        sysid, 1,
+        mavutil.mavlink.MAV_CMD_DO_SET_MODE,
+        0,
+        mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+        PX4_MODE_AUTO_TAKEOFF,
+        0, 0, 0, 0, 0
+    )
+    print(f"✈️  AUTO/TAKEOFF mode sent to sysid={sysid}")
+    time.sleep(0.4)
 
     # Force arm (works even if health checks complain in minimal sim)
     cmd.mav.command_long_send(

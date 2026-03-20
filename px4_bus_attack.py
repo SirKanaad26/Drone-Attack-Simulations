@@ -150,9 +150,10 @@ def set_mode_px4(conn, sysid, custom_mode):
 
 def arm(conn, sysid, name):
     print(f"[*] Arming {name} (sysid={sysid})...")
-    # Set OFFBOARD mode first so PX4 accepts arm + takeoff sequence
-    set_mode_px4(conn, sysid, PX4_MODE_OFFBOARD)
-    # param2=21196 is PX4's force-arm magic — bypasses health checks in SITL
+    # param2=21196 is PX4's force-arm magic — bypasses health checks in SITL.
+    # Do NOT set OFFBOARD here: PX4 rejects OFFBOARD entry unless a setpoint
+    # stream is already active (≥2 Hz). OFFBOARD is set per-drone after the
+    # follow threads are running.
     conn.mav.command_long_send(
         sysid, 1,
         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -421,6 +422,14 @@ def main():
     t1.start()
     t2.start()
     print("[*] Swarm active. Drone2 mirroring Drone1. Drone3 trailing Drone2 at +20m N.")
+
+    # Switch Drone2 and Drone3 to OFFBOARD now that setpoint streams are live.
+    # PX4 requires active setpoints (≥2 Hz) before it will accept the mode change.
+    print("[*] Waiting 1s for setpoint streams to stabilise before entering OFFBOARD...")
+    time.sleep(1)
+    for sysid, name in [(DRONE2_SYSID, "Drone2"), (DRONE3_SYSID, "Drone3")]:
+        print(f"[*] Setting {name} -> OFFBOARD")
+        set_mode_px4(setup_conn, sysid, PX4_MODE_OFFBOARD)
 
     # --- attack menu ---
     print("""
